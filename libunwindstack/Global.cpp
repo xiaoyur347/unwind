@@ -26,6 +26,9 @@
 #include <unwindstack/Maps.h>
 #include <unwindstack/Memory.h>
 
+extern "C" const char* my_basename(const char* path);
+#define basename my_basename
+
 namespace unwindstack {
 
 Global::Global(std::shared_ptr<Memory>& memory) : memory_(memory) {}

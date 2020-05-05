@@ -41,6 +41,11 @@
 #include "MemoryRange.h"
 #include "MemoryRemote.h"
 
+extern "C" int my_process_vm_readv(long pid, const iovec *lvec,
+                              long liovcnt, const void *rvec, long riovcnt,
+                              long flags);
+#define process_vm_readv my_process_vm_readv
+
 namespace unwindstack {
 
 static size_t ProcessVmRead(pid_t pid, uint64_t remote_src, void* dst, size_t len) {

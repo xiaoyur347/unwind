@@ -36,6 +36,9 @@
 
 #include <unwindstack/DexFiles.h>
 
+extern "C" const char* my_basename(const char* path);
+#define basename my_basename
+
 // Use the demangler from libc++.
 extern "C" char* __cxa_demangle(const char*, char*, size_t*, int* status);
 
