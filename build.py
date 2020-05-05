@@ -30,6 +30,10 @@ def get_toolchain_file():
     return "-DCMAKE_TOOLCHAIN_FILE={}/build/cmake/android.toolchain.cmake".format(ndk)
 
 
+def get_abi(abi):
+    return "-DANDROID_ABI={}".format(abi)
+
+
 def run_command(cmd):
     print(cmd)
     ret = os.system(cmd)
@@ -43,7 +47,10 @@ def build_abi(abi):
         os.makedirs(build_dir)
     os.chdir(build_dir)
     cmd = "{} {} {}".format(get_cmake_path(), get_toolchain_file(), source_dir)
-    run_command("{} {} {}".format(get_cmake_path(), get_toolchain_file(), source_dir))
+    run_command("{} {} {} {}".format(get_cmake_path(),
+        get_toolchain_file(),
+        get_abi(abi),
+        source_dir))
     run_command("make")
 
 

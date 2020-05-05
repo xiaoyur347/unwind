@@ -1,13 +1,9 @@
 cmake_minimum_required(VERSION 3.4.1)
 
-if (CMAKE_SYSTEM_NAME STREQUAL "Android")
-    if (ANDROID_NDK_MAJOR GREATER 17)
-        SET(CMAKE_ANDROID_STL_TYPE "c++_static")
-    else()
-        SET(CMAKE_ANDROID_STL_TYPE "gnustl_static")
-    endif()
-endif()
+# needed by AsmGetRegsX86.S and AsmGetRegsX86_64.S
+enable_language(ASM)
 
+# need c++ static for deque
 SET(CMAKE_BUILD_TYPE "Release")
 
 SET(COMMON_CFLAGS "-Wall -Wextra -ffunction-sections -fdata-sections")
@@ -44,6 +40,14 @@ SET(BASE_SRC
     libunwindstack/Unwinder.cpp
     libunwindstack/Symbols.cpp
 )
+
+if (ANDROID_ABI STREQUAL "x86")
+    MESSAGE("ANDROID_ABI=${ANDROID_ABI}")
+    LIST(APPEND BASE_SRC libunwindstack/AsmGetRegsX86.S)
+elseif (ANDROID_ABI STREQUAL "x86_64")
+    MESSAGE("ANDROID_ABI=${ANDROID_ABI}")
+    LIST(APPEND BASE_SRC libunwindstack/AsmGetRegsX86_64.S)
+endif()
 
 SET(LZMA_SRC
     aosp/external/lzma/C/7zAlloc.c
@@ -107,11 +111,11 @@ INCLUDE_DIRECTORIES(
 )
 
 ADD_LIBRARY(
-    libunwindstack
+    unwindstack
 
     SHARED
 
     ${BASE_SRC} ${AOSP_SRC} ${WRAP_SRC} ${LZMA_SRC}
 )
 
-TARGET_LINK_LIBRARIES(libunwindstack log)
+TARGET_LINK_LIBRARIES(unwindstack log)
