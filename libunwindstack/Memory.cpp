@@ -184,7 +184,11 @@ bool Memory::ReadString(uint64_t addr, std::string* dst, size_t max_read) {
       } else {
         // The buffer contains only the last block. Read the whole string again.
         dst->assign(offset + length, '\0');
+#if __cplusplus > 201402L // for dst->data()
         return ReadFully(addr, dst->data(), dst->size());
+#else
+        return ReadFully(addr, const_cast<char*>(dst->data()), dst->size());
+#endif
       }
     }
   }
@@ -192,7 +196,12 @@ bool Memory::ReadString(uint64_t addr, std::string* dst, size_t max_read) {
 }
 
 std::unique_ptr<Memory> Memory::CreateFileMemory(const std::string& path, uint64_t offset) {
+#if __cplusplus > 201103L // for make_unique
   auto memory = std::make_unique<MemoryFileAtOffset>();
+#else
+  auto memory =
+      std::unique_ptr<MemoryFileAtOffset>(new MemoryFileAtOffset());
+#endif
 
   if (memory->Init(path, offset)) {
     return memory;
@@ -401,7 +410,12 @@ bool MemoryOffline::Init(const std::string& file, uint64_t offset) {
     return false;
   }
 
+#if __cplusplus > 201103L // for make_unique
   memory_ = std::make_unique<MemoryRange>(memory_file, sizeof(start), size, start);
+#else
+  memory_ =
+      std::unique_ptr<MemoryRange>(new MemoryRange(memory_file, sizeof(start), size, start));
+#endif
   return true;
 }
 

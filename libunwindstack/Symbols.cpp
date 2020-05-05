@@ -71,7 +71,11 @@ const Symbols::Info* Symbols::BinarySearch(uint64_t addr, Memory* elf_memory) {
   size_t last = RemapIndices ? remap_->size() : count_;
   while (first < last) {
     size_t current = first + (last - first) / 2;
+#if __cplusplus >= 201703L // for optional
     size_t symbol_index = RemapIndices ? remap_.value()[current] : current;
+#else
+    size_t symbol_index = RemapIndices ? remap_->at(current) : current;
+#endif
     const Info* info = ReadFuncInfo<SymType>(symbol_index, elf_memory);
     if (info == nullptr) {
       return nullptr;
@@ -92,7 +96,11 @@ template <typename SymType>
 void Symbols::BuildRemapTable(Memory* elf_memory) {
   std::vector<uint64_t> addrs;  // Addresses of all symbols (addrs[i] == symbols[i].st_value).
   addrs.reserve(count_);
+#if __cplusplus >= 201703L // for optional
   remap_.emplace();  // Construct the optional remap table.
+#else
+  remap_.reset(new std::vector<uint32_t>());
+#endif
   remap_->reserve(count_);
   for (size_t symbol_idx = 0; symbol_idx < count_;) {
     // Read symbols from memory.  We intentionally bypass the cache to save memory.
@@ -113,10 +121,18 @@ void Symbols::BuildRemapTable(Memory* elf_memory) {
     }
   }
   // Sort by address to make the remap list binary searchable (stable due to the a<b tie break).
+#if __cplusplus > 201103L // for auto
   auto comp = [&addrs](auto a, auto b) { return std::tie(addrs[a], a) < std::tie(addrs[b], b); };
+#else
+  auto comp = [&addrs](uint32_t a, uint32_t b) { return std::tie(addrs[a], a) < std::tie(addrs[b], b); };
+#endif
   std::sort(remap_->begin(), remap_->end(), comp);
   // Remove duplicate entries (methods de-duplicated by the linker).
+#if __cplusplus > 201103L // for auto
   auto pred = [&addrs](auto a, auto b) { return addrs[a] == addrs[b]; };
+#else
+  auto pred = [&addrs](uint32_t a, uint32_t b) { return addrs[a] == addrs[b]; };
+#endif
   remap_->erase(std::unique(remap_->begin(), remap_->end(), pred), remap_->end());
   remap_->shrink_to_fit();
 }
@@ -124,7 +140,11 @@ void Symbols::BuildRemapTable(Memory* elf_memory) {
 template <typename SymType>
 bool Symbols::GetName(uint64_t addr, Memory* elf_memory, std::string* name, uint64_t* func_offset) {
   const Info* info;
+#if __cplusplus >= 201703L // for optional
   if (!remap_.has_value()) {
+#else
+  if (remap_.get() == nullptr) {
+#endif
     // Assume the symbol table is sorted. If it is not, this will gracefully fail.
     info = BinarySearch<SymType, false>(addr, elf_memory);
     if (info == nullptr) {

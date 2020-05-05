@@ -85,8 +85,13 @@ void Maps::Add(uint64_t start, uint64_t end, uint64_t offset, uint64_t flags,
     prev_real_map = prev_real_map->prev_map;
   }
 
+#if __cplusplus > 201103L // for make_unique
   auto map_info =
       std::make_unique<MapInfo>(prev_map, prev_real_map, start, end, offset, flags, name);
+#else
+  auto map_info =
+      std::unique_ptr<MapInfo>(new MapInfo(prev_map, prev_real_map, start, end, offset, flags, name));
+#endif
   map_info->load_bias = load_bias;
   maps_.emplace_back(std::move(map_info));
 }
@@ -193,7 +198,12 @@ bool LocalUpdatableMaps::Reparse() {
 
   // Sort all of the values such that the nullptrs wind up at the end, then
   // resize them away.
+#if __cplusplus > 201103L // for auto&
   std::sort(maps_.begin(), maps_.end(), [](const auto& a, const auto& b) {
+#else
+  std::sort(maps_.begin(), maps_.end(),
+    [](const std::unique_ptr<MapInfo>& a, const std::unique_ptr<MapInfo>& b) {
+#endif
     if (a == nullptr) {
       return false;
     } else if (b == nullptr) {

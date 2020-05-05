@@ -68,7 +68,11 @@ class Symbols {
   const uint64_t str_end_;
 
   std::unordered_map<uint32_t, Info> symbols_;  // Cache of read symbols (keyed by symbol index).
+#if __cplusplus >= 201703L // for optional
   std::optional<std::vector<uint32_t>> remap_;  // Indices of function symbols sorted by address.
+#else
+  std::unique_ptr<std::vector<uint32_t>> remap_;// Indices of function symbols sorted by address.
+#endif
 };
 
 }  // namespace unwindstack
