@@ -51,7 +51,7 @@ def build_abi(abi):
         get_toolchain_file(),
         get_abi(abi),
         source_dir))
-    run_command("make")
+    run_command("make -j4")
 
 
 if __name__ == "__main__":
